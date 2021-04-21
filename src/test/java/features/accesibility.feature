@@ -1,5 +1,6 @@
 Feature: Test Intelligent sales for accessibility
 
+  @Accessibility
   Scenario Outline: Run all automated accessibility tests.
     Given the web page "<url>" is displayed
     When I scan for accessibility concerns
@@ -7,5 +8,3 @@ Feature: Test Intelligent sales for accessibility
     Examples:
       |url|
       |https://kc-pep-is-dev.web.app/|
-      |https://app.starbucks.com/|
-      |https://2048game.com/|

@@ -3,28 +3,25 @@ package utils;
 import com.google.common.collect.ImmutableMap;
 import io.cucumber.java.Scenario;
 import io.github.bonigarcia.wdm.WebDriverManager;
+import io.github.bonigarcia.wdm.config.DriverManagerType;
 import org.apache.commons.io.FileUtils;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.TakesScreenshot;
-import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.html5.Location;
 import org.openqa.selenium.html5.LocationContext;
-import org.openqa.selenium.remote.Command;
-import org.openqa.selenium.remote.CommandExecutor;
-import org.openqa.selenium.remote.RemoteWebDriver;
-import org.openqa.selenium.remote.Response;
+import org.openqa.selenium.remote.*;
+import org.openqa.selenium.safari.SafariDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.Wait;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.DateFormat;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
@@ -48,68 +45,89 @@ public class Driver {
     }
     //region Constructor
 
-    public Driver() {
+    public Driver(String browser) {
         loadProperties();
-        options = new ChromeOptions();
-        WebDriverManager.chromedriver().setup();
-        try{
-            driver = new ChromeDriver(options);
-            driver.manage().window().maximize();
 
+
+        switch (browser.toUpperCase(Locale.ROOT)) {
+
+            case "CHROME":
+                WebDriverManager.chromedriver().setup();
+                driver = new ChromeDriver();
+                break;
+
+            case "FIREFOX":
+                WebDriverManager.firefoxdriver().setup();
+                driver = (new FirefoxDriver());
+                break;
+
+            case "IPAD":
+                loadProperties();
+
+                setCapabilities("iPad");
+                WebDriverManager.chromedriver().setup();
+                driver = new ChromeDriver(options);
+                driver.manage().window().maximize();
+
+                break;
+
+            case "IPHONE":
+                loadProperties();
+                setCapabilities("iPhone 6/7/8 Plus");
+                WebDriverManager.chromedriver().setup();
+                driver = new ChromeDriver(options);
+                driver.manage().window().maximize();
+                break;
+
+            case "SAFARI":
+                WebDriverManager.getInstance(DriverManagerType.SAFARI).setup();
+                driver = (new SafariDriver());
+                break;
         }
-        catch(Exception ignored){
-        }
+
+        driver.manage().window().maximize();
+
     }
 
-    public Driver(String deviceEmulation) {
-        loadProperties();
-        options = new ChromeOptions();
-        setCapabilities(deviceEmulation);
-        WebDriverManager.chromedriver().setup();
-        try{
-            driver = new ChromeDriver(options);
-            driver.manage().window().maximize();
-        }
-        catch(Exception ignored){        }
 
-    }
     //endregion
 
 
-    private void setCapabilities(String emulation){
+    private void setCapabilities( String emulation){
        options = new ChromeOptions();
-       // Map<String, Object> deviceMetrics = new HashMap<>();
-       // deviceMetrics.put("width", 375);
-       // deviceMetrics.put("height", 812);
-       // deviceMetrics.put("pixelRatio", 3.0);
        Map<String, String> mobileEmulation = new HashMap<>();
-       mobileEmulation.put("deviceName",emulation );
-       // Map<String, Object> mobileEmulation = new HashMap<>();
-       // mobileEmulation.put("deviceMetrics", deviceMetrics);
-       // mobileEmulation.put("userAgent", "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1");
+       mobileEmulation.put("deviceName", emulation);
+
+
         options.setExperimentalOption("mobileEmulation", mobileEmulation);
+       // options.setExperimentalOption("mobileEmulation", emulation);
+
     }
 
 
 
     //region Public methods
 
-    public  WebDriver getDriver() {
+    public  WebDriver getDriver(){
         if (driver == null) {
-            new Driver();}
+        }
         return driver;
     }
 
-    public  void screenshot(Scenario snr)  {
+    public  void screenshot(Scenario snr,String name)  {
 
         try{
 
             File src = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            byte[] ts =  ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
+            snr.attach(ts, "image/png","screenshot");
+
             // now copy the screenshot to desired location using copyFile //method
-            FileUtils.copyFile(src, new File(System.getProperty("user.dir") + "target/" + properties.getProperty("Screenshots")  + "screenshot.png"));
+            FileUtils.copyFile(src, new File( System.getProperty("user.dir") + "target/" + properties.getProperty("screenshots")  + "/" + name + ".png"));
 
         }
-        catch(Exception e){ e.printStackTrace();}
+        catch(Exception e){
+            snr.log(e.getMessage());}
     }
 
     public  Properties getProperties() {

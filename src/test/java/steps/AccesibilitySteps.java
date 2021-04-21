@@ -18,24 +18,23 @@ import utils.Driver;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AccesibilitySteps {
+public class AccesibilitySteps extends BaseClass{
 
-    private Driver driver;
     private Results result;
     private String responseJson;
     String url;
 
-    @Before
+    @Before("@Accessibility")
     public void setup(){
 
-        driver = new Driver("iPhone X");
+        driver = new Driver("Chrome");;
     }
 
-    @After
+
+    @After("@Accessibility")
     public  void tearDown(){
         driver.getDriver().quit();
     }
-
 
     @Given("the web page {string} is displayed")
     public void theWebPageIsDisplayed(String arg0) {
@@ -50,9 +49,10 @@ public class AccesibilitySteps {
         ObjectMapper mapper = new ObjectMapper();
         List<String> rules = new ArrayList<String>();
 
-        rules.add("region");rules.add("landmark-one-main");
+        // rules to omit
+        //rules.add("region");rules.add("landmark-one-main");
 
-        AxeBuilder builder = new AxeBuilder().disableRules(rules);
+        AxeBuilder builder = new AxeBuilder();//.disableRules(rules);
         result = builder.analyze(driver.getDriver());
         List<Rule> violations = result.getViolations();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
@@ -65,6 +65,7 @@ public class AccesibilitySteps {
         AxeReporter.writeResultsToJsonFile("target/"+  result.getTimestamp(),result);
         Assert.assertTrue("accessibility issues : "+ responseJson,result.violationFree());
     }
+
 
 
 }
